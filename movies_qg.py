@@ -31,14 +31,16 @@ cmap = 'darkjet'
 
 # Load some information
 dat = spy.get_params()
+spy.local_data.disc_order = 'xyz'
 Nx = dat.Nx
 Ny = dat.Ny
 Nz = dat.Nz
-tplot = dat.tplot
+tplot = dat.tplot/(24.*3600)
 
-x = np.fromfile('xgrid','<d').reshape((Nx,Ny,Nz))[:,0,0]/1e3
-y = np.fromfile('ygrid','<d').reshape((Nx,Ny,Nz))[0,:,0]/1e3
-z = np.fromfile('zgrid','<d').reshape((Nx,Ny,Nz))[0,0,:]/1e3
+x,y,z = spy.get_grid()
+x = x/1e3
+y = y/1e3
+z = z/1e3
 
 dx = x[1]-x[0]
 dy = y[1]-y[0]
@@ -100,40 +102,42 @@ ii = rank # parallel, so start where necessary
 cont = True
 
 # Load background state
-bg = np.fromfile(dat.qb_file,'<d').reshape((Nx,Ny,Nz))
+bg_xy = spy.reader(dat.qb_file,0,[0,-1],[0,-1],dat.Nz/2,force_name=True)
+bg_xz = spy.reader(dat.qb_file,0,[0,-1],dat.Ny/2,[0,-1],force_name=True)
 
 while cont:
     try:
-        var_3d = np.fromfile('q.{0:d}'.format(ii),'<d').reshape((Nx,Ny,Nz))
+        var_3d_xy = spy.reader('q',ii,[0,-1],[0,-1],dat.Nz/2)
+        var_3d_xz = spy.reader('q',ii,[0,-1],dat.Nz/2,[0,-1])
         print('Processor {0:d} accessing q.{1:d}'.format(rank,ii))
 
         if dat.method == 'linear':
-            QM_xy_p.set_array(var_3d[:,:,Nz/2].T.ravel())
-            QM_xz_p.set_array(var_3d[:,Ny/2,:].T.ravel())
-            QM_xy.set_array((var_3d+bg)[:,:,Nz/2].T.ravel())
-            QM_xz.set_array((var_3d+bg)[:,Ny/2,:].T.ravel())
+            QM_xy_p.set_array(var_3d_xy.T.ravel())
+            QM_xz_p.set_array(var_3d_xz.T.ravel())
+            QM_xy.set_array((var_3d_xy+bg_xy).T.ravel())
+            QM_xz.set_array((var_3d_xz+bg_xz).T.ravel())
 
-            cv = np.max(abs(var_3d[:,:,Nz/2].ravel()))
+            cv = np.max(abs(var_3d_xy.ravel()))
             QM_xy_p.set_clim((-cv,cv))
-            cv = np.max(abs(var_3d[:,Ny/2,:].ravel()))
+            cv = np.max(abs(var_3d_xz.ravel()))
             QM_xz_p.set_clim((-cv,cv))
-            cv = np.max(abs((var_3d+bg)[:,:,Nz/2].ravel()))
+            cv = np.max(abs((var_3d_xy+bg_xy).ravel()))
             QM_xy.set_clim((-cv,cv))
-            cv = np.max(abs((var_3d+bg)[:,Ny/2,:].ravel()))
+            cv = np.max(abs((var_3d_xz+bg_xz).ravel()))
             QM_xz.set_clim((-cv,cv))
         elif dat.method == 'nonlinear':
-            QM_xy.set_array(var_3d[:,:,Nz/2].T.ravel())
-            QM_xz.set_array(var_3d[:,Ny/2,:].T.ravel())
-            QM_xy_p.set_array((var_3d-bg)[:,:,Nz/2].T.ravel())
-            QM_xz_p.set_array((var_3d-bg)[:,Ny/2,:].T.ravel())
+            QM_xy.set_array(var_3d_xy.T.ravel())
+            QM_xz.set_array(var_3d_xz.T.ravel())
+            QM_xy_p.set_array((var_3d_xy-bg_xy).T.ravel())
+            QM_xz_p.set_array((var_3d_xz-bg_xz).T.ravel())
 
-            cv = np.max(abs(var_3d[:,:,Nz/2].ravel()))
+            cv = np.max(abs(var_3d_xy.ravel()))
             QM_xy.set_clim((-cv,cv))
-            cv = np.max(abs(var_3d[:,Ny/2,:].ravel()))
+            cv = np.max(abs(var_3d_xz.ravel()))
             QM_xz.set_clim((-cv,cv))
-            cv = np.max(abs((var_3d-bg)[:,:,Nz/2].ravel()))
+            cv = np.max(abs((var_3d_xy-bg_xy).ravel()))
             QM_xy_p.set_clim((-cv,cv))
-            cv = np.max(abs((var_3d-bg)[:,Ny/2,:].ravel()))
+            cv = np.max(abs((var_3d_xz-bg_xz).ravel()))
             QM_xz_p.set_clim((-cv,cv))
 
         QM_xy.changed()
@@ -141,10 +145,10 @@ while cont:
         QM_xy_p.changed()
         QM_xz_p.changed()
 
-        fig_xy_ttl.set_text('q (full) : t = {0:.3g}'.format(ii*tplot))
-        fig_xz_ttl.set_text('q (full) : t = {0:.3g}'.format(ii*tplot))
-        fig_xy_p_ttl.set_text('q (pert) : t = {0:.3g}'.format(ii*tplot))
-        fig_xz_p_ttl.set_text('q (pert) : t = {0:.3g}'.format(ii*tplot))
+        fig_xy_ttl.set_text('q (full) : t = {0:.3g} days'.format(ii*tplot))
+        fig_xz_ttl.set_text('q (full) : t = {0:.3g} days'.format(ii*tplot))
+        fig_xy_p_ttl.set_text('q (pert) : t = {0:.3g} days'.format(ii*tplot))
+        fig_xz_p_ttl.set_text('q (pert) : t = {0:.3g} days'.format(ii*tplot))
 
         plt.draw()
 

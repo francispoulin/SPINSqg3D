@@ -21,6 +21,7 @@ except:
 
 # Load some information
 dat = spy.get_params()
+spy.local_data.disc_order = 'xyz'
 Nx = dat.Nx
 Ny = dat.Ny
 Nz = dat.Nz
@@ -29,7 +30,7 @@ ct = len(glob.glob('q.*')) # Number of files of form q.*
 ts = np.arange(0,(ct+1)*dt,dt)
 
 if dat.method == 'nonlinear':
-    qb = np.fromfile(dat.qb_file,'<d').reshape((Nx,Ny,Nz))
+    qb = spy.reader(dat.qb_file,0,force_name=True)
 
 norms = np.zeros(ct+1)
 
@@ -39,9 +40,9 @@ while cont:
     try:
         print('Processor {0:d} accessing q.{1:d}'.format(rank,ii))
 
-        var_3d = np.fromfile('q.{0:d}'.format(ii),'<d').reshape((Nx,Ny,Nz))
+        var_3d = spy.reader('q',ii)
         if dat.method == 'nonlinear':
-            var_3d -= qb
+            var_3d = var_3d - qb
         norms[ii] = np.linalg.norm(var_3d.ravel())
 
         ii += num_procs # Parallel, so skip a `bunch'
