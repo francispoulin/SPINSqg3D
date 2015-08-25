@@ -21,13 +21,15 @@ except:
 
 # Load some information
 dat = spy.get_params()
-Nx = dat.Nx, Ny = dat.Ny, Nz = dat.Nz
+Nx = dat.Nx
+Ny = dat.Ny
+Nz = dat.Nz
 dt = dat.tplot/(24.*3600) 
 ct = len(glob.glob('q.*')) # Number of files of form q.*
 ts = np.arange(0,(ct+1)*dt,dt)
 
-if dat.method == 'linear':
-    qb = np.fromfile('qb','<d').reshape((Nx,Ny,Nz))
+if dat.method == 'nonlinear':
+    qb = np.fromfile(dat.qb_file,'<d').reshape((Nx,Ny,Nz))
 
 norms = np.zeros(ct+1)
 
@@ -38,7 +40,7 @@ while cont:
         print('Processor {0:d} accessing q.{1:d}'.format(rank,ii))
 
         var_3d = np.fromfile('q.{0:d}'.format(ii),'<d').reshape((Nx,Ny,Nz))
-        if dat.method == 'linear':
+        if dat.method == 'nonlinear':
             var_3d -= qb
         norms[ii] = np.linalg.norm(var_3d.ravel())
 

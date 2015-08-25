@@ -21,7 +21,7 @@ except:
 ## USER CHANGE THIS SECTION
 out_direct = os.getcwd() + '/Videos'# Where to put the movies
                                     #   the directory needs to already exist!
-the_name = 'QG_'          # What to call the movies
+the_name = 'QG'          # What to call the movies
                                     #   the variable name will be appended
 out_suffix = 'mp4'                  # Movie type
 mov_fps = 10                        # Framerate for movie
@@ -73,25 +73,25 @@ else:
 
 # Initialize the meshes
 fig_xy = plt.figure(figsize=(6,5))
-fig_xy_ttl = fig.suptitle('')
+fig_xy_ttl = fig_xy.suptitle('')
 QM_xy = plt.pcolormesh(gridx,gridy,np.zeros((Ny,Nx)),cmap=cmap)
 plt.axis('tight')
 cbar = plt.colorbar()
 
 fig_xz = plt.figure(figsize=(6,5))
-fig_xz_ttl = fig.suptitle('')
+fig_xz_ttl = fig_xz.suptitle('')
 QM_xz = plt.pcolormesh(gridx,gridz,np.zeros((Nz,Nx)),cmap=cmap)
 plt.axis('tight')
 cbar = plt.colorbar()
 
 fig_xy_p = plt.figure(figsize=(6,5))
-fig_xy_p_ttl = fig.suptitle('')
+fig_xy_p_ttl = fig_xy_p.suptitle('')
 QM_xy_p = plt.pcolormesh(gridx,gridy,np.zeros((Ny,Nx)),cmap=cmap)
 plt.axis('tight')
 cbar = plt.colorbar()
 
 fig_xz_p = plt.figure(figsize=(6,5))
-fig_xz_p_ttl = fig.suptitle('')
+fig_xz_p_ttl = fig_xz_p.suptitle('')
 QM_xz_p = plt.pcolormesh(gridx,gridz,np.zeros((Nz,Nx)),cmap=cmap)
 plt.axis('tight')
 cbar = plt.colorbar()
@@ -100,14 +100,14 @@ ii = rank # parallel, so start where necessary
 cont = True
 
 # Load background state
-bg = np.fromfile(dat.qg_file,'<d').reshape((Nx,Ny,Nz))
+bg = np.fromfile(dat.qb_file,'<d').reshape((Nx,Ny,Nz))
 
 while cont:
     try:
         var_3d = np.fromfile('q.{0:d}'.format(ii),'<d').reshape((Nx,Ny,Nz))
         print('Processor {0:d} accessing q.{1:d}'.format(rank,ii))
 
-        if method == 'linear':
+        if dat.method == 'linear':
             QM_xy_p.set_array(var_3d[:,:,Nz/2].T.ravel())
             QM_xz_p.set_array(var_3d[:,Ny/2,:].T.ravel())
             QM_xy.set_array((var_3d+bg)[:,:,Nz/2].T.ravel())
@@ -121,7 +121,7 @@ while cont:
             QM_xy.set_clim((-cv,cv))
             cv = np.max(abs((var_3d+bg)[:,:,Nz/2].ravel()))
             QM_xz.set_clim((-cv,cv))
-        elif method == 'nonlinear':
+        elif dat.method == 'nonlinear':
             QM_xy.set_array(var_3d[:,:,Nz/2].T.ravel())
             QM_xz.set_array(var_3d[:,Ny/2,:].T.ravel())
             QM_xy_p.set_array((var_3d-bg)[:,:,Nz/2].T.ravel())
