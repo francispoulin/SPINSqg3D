@@ -119,7 +119,7 @@ while cont:
             QM_xz_p.set_clim((-cv,cv))
             cv = np.max(abs((var_3d+bg)[:,:,Nz/2].ravel()))
             QM_xy.set_clim((-cv,cv))
-            cv = np.max(abs((var_3d+bg)[:,:,Nz/2].ravel()))
+            cv = np.max(abs((var_3d+bg)[:,Ny/2,:].ravel()))
             QM_xz.set_clim((-cv,cv))
         elif dat.method == 'nonlinear':
             QM_xy.set_array(var_3d[:,:,Nz/2].T.ravel())
@@ -133,7 +133,7 @@ while cont:
             QM_xz.set_clim((-cv,cv))
             cv = np.max(abs((var_3d-bg)[:,:,Nz/2].ravel()))
             QM_xy_p.set_clim((-cv,cv))
-            cv = np.max(abs((var_3d-bg)[:,:,Nz/2].ravel()))
+            cv = np.max(abs((var_3d-bg)[:,Ny/2,:].ravel()))
             QM_xz_p.set_clim((-cv,cv))
 
         QM_xy.changed()
