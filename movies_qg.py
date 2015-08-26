@@ -108,7 +108,7 @@ bg_xz = spy.reader(dat.qb_file,0,[0,-1],dat.Ny/2,[0,-1],force_name=True)
 while cont:
     try:
         var_3d_xy = spy.reader('q',ii,[0,-1],[0,-1],dat.Nz/2)
-        var_3d_xz = spy.reader('q',ii,[0,-1],dat.Nz/2,[0,-1])
+        var_3d_xz = spy.reader('q',ii,[0,-1],dat.Ny/2,[0,-1])
         print('Processor {0:d} accessing q.{1:d}'.format(rank,ii))
 
         if dat.method == 'linear':
