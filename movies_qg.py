@@ -23,12 +23,12 @@ out_direct = os.getcwd() + '/Videos'  # Where to put the movies
 the_name = 'QG'                       # What to call the movies
 out_suffix = 'mp4'                    # Movie type
 mov_fps = 10                          # Framerate for movie
-plt_var = ['q']                     # Which variables to plot
+plt_var = ['q','psi']                     # Which variables to plot
 cmap = 'ocean'
 ##
 
 # If the the out_directory doesn't exist, create it
-if not(os.path.exists(out_direct)):
+if (rank == 0) and not(os.path.exists(out_direct)):
     os.makedirs(out_direct)
 
 # Load some information
@@ -76,17 +76,18 @@ else:
     out_prefix = comm.recv(source=0,tag=3)
 
 # Initialize the meshes
-fig_xy = plt.figure(figsize=(6,5))
-fig_xy_ttl = fig_xy.suptitle('')
-QM_xy = plt.pcolormesh(gridx,gridy,np.zeros((Ny,Nx)),cmap=cmap)
-plt.axis('tight')
-cbar = plt.colorbar()
+if not(dat.method == 'linear'):
+    fig_xy = plt.figure(figsize=(6,5))
+    fig_xy_ttl = fig_xy.suptitle('')
+    QM_xy = plt.pcolormesh(gridx,gridy,np.zeros((Ny,Nx)),cmap=cmap)
+    plt.axis('tight')
+    cbar = plt.colorbar()
 
-fig_xz = plt.figure(figsize=(6,5))
-fig_xz_ttl = fig_xz.suptitle('')
-QM_xz = plt.pcolormesh(gridx,gridz,np.zeros((Nz,Nx)),cmap=cmap)
-plt.axis('tight')
-cbar = plt.colorbar()
+    fig_xz = plt.figure(figsize=(6,5))
+    fig_xz_ttl = fig_xz.suptitle('')
+    QM_xz = plt.pcolormesh(gridx,gridz,np.zeros((Nz,Nx)),cmap=cmap)
+    plt.axis('tight')
+    cbar = plt.colorbar()
 
 fig_xy_p = plt.figure(figsize=(6,5))
 fig_xy_p_ttl = fig_xy_p.suptitle('')
@@ -106,12 +107,13 @@ for var in plt_var:
     cont = True
 
     # Load background state
-    if var == 'q':
-        bg_xy = spy.reader(dat.qb_file,0,[0,-1],[0,-1],dat.Nz/2,force_name=True)
-        bg_xz = spy.reader(dat.qb_file,0,[0,-1],dat.Ny/2,[0,-1],force_name=True)
-    elif var == 'psi':
-        bg_xy = spy.reader(dat.psib_file,0,[0,-1],[0,-1],dat.Nz/2,force_name=True)
-        bg_xz = spy.reader(dat.psib_file,0,[0,-1],dat.Ny/2,[0,-1],force_name=True)
+    if dat.method == 'linear':
+        if var == 'q':
+            bg_xy = spy.reader(dat.qb_file,0,[0,-1],[0,-1],dat.Nz/2,force_name=True)
+            bg_xz = spy.reader(dat.qb_file,0,[0,-1],dat.Ny/2,[0,-1],force_name=True)
+        elif var == 'psi':
+            bg_xy = spy.reader(dat.psib_file,0,[0,-1],[0,-1],dat.Nz/2,force_name=True)
+            bg_xz = spy.reader(dat.psib_file,0,[0,-1],dat.Ny/2,[0,-1],force_name=True)
 
     while cont:
         try:
@@ -122,17 +124,12 @@ for var in plt_var:
             if dat.method == 'linear':
                 QM_xy_p.set_array(var_3d_xy.T.ravel())
                 QM_xz_p.set_array(var_3d_xz.T.ravel())
-                QM_xy.set_array((var_3d_xy+bg_xy).T.ravel())
-                QM_xz.set_array((var_3d_xz+bg_xz).T.ravel())
 
                 cv = np.max(abs(var_3d_xy.ravel()))
                 QM_xy_p.set_clim((-cv,cv))
                 cv = np.max(abs(var_3d_xz.ravel()))
                 QM_xz_p.set_clim((-cv,cv))
-                cv = np.max(abs((var_3d_xy+bg_xy).ravel()))
-                QM_xy.set_clim((-cv,cv))
-                cv = np.max(abs((var_3d_xz+bg_xz).ravel()))
-                QM_xz.set_clim((-cv,cv))
+
             elif dat.method == 'nonlinear':
                 QM_xy.set_array(var_3d_xy.T.ravel())
                 QM_xz.set_array(var_3d_xz.T.ravel())
@@ -148,20 +145,22 @@ for var in plt_var:
                 cv = np.max(abs((var_3d_xz-bg_xz).ravel()))
                 QM_xz_p.set_clim((-cv,cv))
 
-            QM_xy.changed()
-            QM_xz.changed()
+            if not(dat.method == 'linear'):
+                QM_xy.changed()
+                QM_xz.changed()
+                fig_xy_ttl.set_text('{0:s} (full) : t = {1:.3g} days'.format(var,ii*tplot))
+                fig_xz_ttl.set_text('{0:s} (full) : t = {1:.3g} days'.format(var,ii*tplot))
+
             QM_xy_p.changed()
             QM_xz_p.changed()
-
-            fig_xy_ttl.set_text('{0:s} (full) : t = {1:.3g} days'.format(var,ii*tplot))
-            fig_xz_ttl.set_text('{0:s} (full) : t = {1:.3g} days'.format(var,ii*tplot))
             fig_xy_p_ttl.set_text('{0:s} (pert) : t = {1:.3g} days'.format(var,ii*tplot))
             fig_xz_p_ttl.set_text('{0:s} (pert) : t = {1:.3g} days'.format(var,ii*tplot))
 
             plt.draw()
 
-            fig_xy.savefig('{0:s}{1:s}-{2:05d}_xy.png'.format(fig_prefix,var,ii))
-            fig_xz.savefig('{0:s}{1:s}-{2:05d}_xz.png'.format(fig_prefix,var,ii))
+            if not(dat.method == 'linear'):
+                fig_xy.savefig('{0:s}{1:s}-{2:05d}_xy.png'.format(fig_prefix,var,ii))
+                fig_xz.savefig('{0:s}{1:s}-{2:05d}_xz.png'.format(fig_prefix,var,ii))
             fig_xy_p.savefig('{0:s}{1:s}-{2:05d}_xy_p.png'.format(fig_prefix,var,ii))
             fig_xz_p.savefig('{0:s}{1:s}-{2:05d}_xz_p.png'.format(fig_prefix,var,ii))
         
@@ -184,7 +183,12 @@ for var in plt_var:
     if rank == 0:
 
         # Make the videos
-        for plot_type in ['xy','xz','xy_p','xz_p']:
+        if dat.method == 'linear':
+            plot_types = ['xy_p','xz_p']
+        else:
+            plot_types = ['xy','xz','xy_p','xz_p']
+
+        for plot_type in plot_types:
             in_name = '{0:s}{1:s}-%05d_{2:s}.png'.format(fig_prefix,var,plot_type)
             out_name = '{0:s}_{1:s}_{2:s}.{3:s}'.format(out_prefix,var,plot_type,out_suffix)
             cmd = ['ffmpeg', '-framerate', str(mov_fps), '-r', str(mov_fps),

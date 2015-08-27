@@ -13,4 +13,4 @@ The files in this repository are:
   * Note: parallelized 
 4. Compute_norms.py
   * Plots the norm of the perturbation potential vorticity as well as the growth rate.
-  * Note: paralllized
+  * Note: parallelized
