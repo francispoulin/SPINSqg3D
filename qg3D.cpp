@@ -737,10 +737,13 @@ void compute_dt(solnclass & soln) {
         dt = soln.dy/max_v/5;
     }
 
-    if (dt < 100.0) {
+    if (dt < 20.0) {
       if (master())
 	fprintf(stderr,"Time step is %g seconds, too small to continue. Force exit!\n",dt);
       MPI_Finalize(); exit(1);
+    }
+    else if(dt > 15000.0) {
+        dt = 15000.0;
     }
 
     if (dt + soln.t >= soln.next_plot_time) {

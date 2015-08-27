@@ -19,15 +19,17 @@ except:
     num_procs = 1
 
 ## USER CHANGE THIS SECTION
-out_direct = os.getcwd() + '/Videos'# Where to put the movies
-                                    #   the directory needs to already exist!
-the_name = 'QG'          # What to call the movies
-                                    #   the variable name will be appended
-out_suffix = 'mp4'                  # Movie type
-mov_fps = 10                        # Framerate for movie
+out_direct = os.getcwd() + '/Videos'  # Where to put the movies
+the_name = 'QG'                       # What to call the movies
+out_suffix = 'mp4'                    # Movie type
+mov_fps = 10                          # Framerate for movie
 plt_var = ['q']                     # Which variables to plot
-cmap = 'darkjet'
+cmap = 'ocean'
 ##
+
+# If the the out_directory doesn't exist, create it
+if not(os.path.exists(out_direct)):
+    os.makedirs(out_direct)
 
 # Load some information
 dat = spy.get_params()
@@ -98,91 +100,98 @@ QM_xz_p = plt.pcolormesh(gridx,gridz,np.zeros((Nz,Nx)),cmap=cmap)
 plt.axis('tight')
 cbar = plt.colorbar()
 
-ii = rank # parallel, so start where necessary
-cont = True
+for var in plt_var:
 
-# Load background state
-bg_xy = spy.reader(dat.qb_file,0,[0,-1],[0,-1],dat.Nz/2,force_name=True)
-bg_xz = spy.reader(dat.qb_file,0,[0,-1],dat.Ny/2,[0,-1],force_name=True)
+    ii = rank # parallel, so start where necessary
+    cont = True
 
-while cont:
-    try:
-        var_3d_xy = spy.reader('q',ii,[0,-1],[0,-1],dat.Nz/2)
-        var_3d_xz = spy.reader('q',ii,[0,-1],dat.Ny/2,[0,-1])
-        print('Processor {0:d} accessing q.{1:d}'.format(rank,ii))
+    # Load background state
+    if var == 'q':
+        bg_xy = spy.reader(dat.qb_file,0,[0,-1],[0,-1],dat.Nz/2,force_name=True)
+        bg_xz = spy.reader(dat.qb_file,0,[0,-1],dat.Ny/2,[0,-1],force_name=True)
+    elif var == 'psi':
+        bg_xy = spy.reader(dat.psib_file,0,[0,-1],[0,-1],dat.Nz/2,force_name=True)
+        bg_xz = spy.reader(dat.psib_file,0,[0,-1],dat.Ny/2,[0,-1],force_name=True)
 
-        if dat.method == 'linear':
-            QM_xy_p.set_array(var_3d_xy.T.ravel())
-            QM_xz_p.set_array(var_3d_xz.T.ravel())
-            QM_xy.set_array((var_3d_xy+bg_xy).T.ravel())
-            QM_xz.set_array((var_3d_xz+bg_xz).T.ravel())
+    while cont:
+        try:
+            var_3d_xy = spy.reader(var,ii,[0,-1],[0,-1],dat.Nz/2)
+            var_3d_xz = spy.reader(var,ii,[0,-1],dat.Ny/2,[0,-1])
+            print('Processor {0:d} accessing {1:s}.{2:d}'.format(rank,var,ii))
 
-            cv = np.max(abs(var_3d_xy.ravel()))
-            QM_xy_p.set_clim((-cv,cv))
-            cv = np.max(abs(var_3d_xz.ravel()))
-            QM_xz_p.set_clim((-cv,cv))
-            cv = np.max(abs((var_3d_xy+bg_xy).ravel()))
-            QM_xy.set_clim((-cv,cv))
-            cv = np.max(abs((var_3d_xz+bg_xz).ravel()))
-            QM_xz.set_clim((-cv,cv))
-        elif dat.method == 'nonlinear':
-            QM_xy.set_array(var_3d_xy.T.ravel())
-            QM_xz.set_array(var_3d_xz.T.ravel())
-            QM_xy_p.set_array((var_3d_xy-bg_xy).T.ravel())
-            QM_xz_p.set_array((var_3d_xz-bg_xz).T.ravel())
+            if dat.method == 'linear':
+                QM_xy_p.set_array(var_3d_xy.T.ravel())
+                QM_xz_p.set_array(var_3d_xz.T.ravel())
+                QM_xy.set_array((var_3d_xy+bg_xy).T.ravel())
+                QM_xz.set_array((var_3d_xz+bg_xz).T.ravel())
 
-            cv = np.max(abs(var_3d_xy.ravel()))
-            QM_xy.set_clim((-cv,cv))
-            cv = np.max(abs(var_3d_xz.ravel()))
-            QM_xz.set_clim((-cv,cv))
-            cv = np.max(abs((var_3d_xy-bg_xy).ravel()))
-            QM_xy_p.set_clim((-cv,cv))
-            cv = np.max(abs((var_3d_xz-bg_xz).ravel()))
-            QM_xz_p.set_clim((-cv,cv))
+                cv = np.max(abs(var_3d_xy.ravel()))
+                QM_xy_p.set_clim((-cv,cv))
+                cv = np.max(abs(var_3d_xz.ravel()))
+                QM_xz_p.set_clim((-cv,cv))
+                cv = np.max(abs((var_3d_xy+bg_xy).ravel()))
+                QM_xy.set_clim((-cv,cv))
+                cv = np.max(abs((var_3d_xz+bg_xz).ravel()))
+                QM_xz.set_clim((-cv,cv))
+            elif dat.method == 'nonlinear':
+                QM_xy.set_array(var_3d_xy.T.ravel())
+                QM_xz.set_array(var_3d_xz.T.ravel())
+                QM_xy_p.set_array((var_3d_xy-bg_xy).T.ravel())
+                QM_xz_p.set_array((var_3d_xz-bg_xz).T.ravel())
 
-        QM_xy.changed()
-        QM_xz.changed()
-        QM_xy_p.changed()
-        QM_xz_p.changed()
+                cv = np.max(abs(var_3d_xy.ravel()))
+                QM_xy.set_clim((-cv,cv))
+                cv = np.max(abs(var_3d_xz.ravel()))
+                QM_xz.set_clim((-cv,cv))
+                cv = np.max(abs((var_3d_xy-bg_xy).ravel()))
+                QM_xy_p.set_clim((-cv,cv))
+                cv = np.max(abs((var_3d_xz-bg_xz).ravel()))
+                QM_xz_p.set_clim((-cv,cv))
 
-        fig_xy_ttl.set_text('q (full) : t = {0:.3g} days'.format(ii*tplot))
-        fig_xz_ttl.set_text('q (full) : t = {0:.3g} days'.format(ii*tplot))
-        fig_xy_p_ttl.set_text('q (pert) : t = {0:.3g} days'.format(ii*tplot))
-        fig_xz_p_ttl.set_text('q (pert) : t = {0:.3g} days'.format(ii*tplot))
+            QM_xy.changed()
+            QM_xz.changed()
+            QM_xy_p.changed()
+            QM_xz_p.changed()
 
-        plt.draw()
+            fig_xy_ttl.set_text('{0:s} (full) : t = {1:.3g} days'.format(var,ii*tplot))
+            fig_xz_ttl.set_text('{0:s} (full) : t = {1:.3g} days'.format(var,ii*tplot))
+            fig_xy_p_ttl.set_text('{0:s} (pert) : t = {1:.3g} days'.format(var,ii*tplot))
+            fig_xz_p_ttl.set_text('{0:s} (pert) : t = {1:.3g} days'.format(var,ii*tplot))
 
-        fig_xy.savefig('{0:s}q-{1:05d}_xy.png'.format(fig_prefix,ii))
-        fig_xz.savefig('{0:s}q-{1:05d}_xz.png'.format(fig_prefix,ii))
-        fig_xy_p.savefig('{0:s}q-{1:05d}_xy_p.png'.format(fig_prefix,ii))
-        fig_xz_p.savefig('{0:s}q-{1:05d}_xz_p.png'.format(fig_prefix,ii))
+            plt.draw()
+
+            fig_xy.savefig('{0:s}{1:s}-{2:05d}_xy.png'.format(fig_prefix,var,ii))
+            fig_xz.savefig('{0:s}{1:s}-{2:05d}_xz.png'.format(fig_prefix,var,ii))
+            fig_xy_p.savefig('{0:s}{1:s}-{2:05d}_xy_p.png'.format(fig_prefix,var,ii))
+            fig_xz_p.savefig('{0:s}{1:s}-{2:05d}_xz_p.png'.format(fig_prefix,var,ii))
         
-        ii += num_procs # Parallel, so skip a `bunch'
-    except:
-        cont = False
+            ii += num_procs # Parallel, so skip a `bunch'
+        except:
+            cont = False
 
-# Have processor 0 wait for the others
-if num_procs > 1:
-    if rank > 0:
-        isdone = True
-        comm.send(isdone, dest=0, tag=rank)
-        print('Processor {0:d} done.'.format(rank))
-    elif rank == 0:
-        isdone = False
-        for proc in range(1,num_procs):
-            isdone = comm.recv(source=proc,tag=proc)
+    # Have processor 0 wait for the others
+    if num_procs > 1:
+        if rank > 0:
+            isdone = True
+            comm.send(isdone, dest=0, tag=rank)
+            print('Processor {0:d} done.'.format(rank))
+        elif rank == 0:
+            isdone = False
+            for proc in range(1,num_procs):
+                isdone = comm.recv(source=proc,tag=proc)
 
-# Now that the individual files have been written, we need to parse them into a movie.
+    # Now that the individual files have been written, we need to parse them into a movie.
+    if rank == 0:
+
+        # Make the videos
+        for plot_type in ['xy','xz','xy_p','xz_p']:
+            in_name = '{0:s}{1:s}-%05d_{2:s}.png'.format(fig_prefix,var,plot_type)
+            out_name = '{0:s}_{1:s}_{2:s}.{3:s}'.format(out_prefix,var,plot_type,out_suffix)
+            cmd = ['ffmpeg', '-framerate', str(mov_fps), '-r', str(mov_fps),
+                '-i', in_name, '-y', '-q', '1', '-pix_fmt', 'yuv420p', out_name]
+            subprocess.call(cmd)
+
 if rank == 0:
-
-    # Make the videos
-    for plot_type in ['xy','xz','xy_p','xz_p']:
-        in_name = '{0:s}q-%05d_{1:s}.png'.format(fig_prefix,plot_type)
-        out_name = '{0:s}_{1:s}.{2:s}'.format(out_prefix,plot_type,out_suffix)
-        cmd = ['ffmpeg', '-framerate', str(mov_fps), '-r', str(mov_fps),
-            '-i', in_name, '-y', '-q', '1', '-pix_fmt', 'yuv420p', out_name]
-        subprocess.call(cmd)
-
     print('--------')
     print('Deleting directory of intermediate frames.')
     shutil.rmtree(tmp_dir)

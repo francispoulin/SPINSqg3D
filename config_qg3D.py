@@ -19,8 +19,7 @@ import sys
 
 # Nondimensional parameters
 Bu = 0.1               # Burger number
-s  = 0.9               # Rossby ratio parameter
-Ro = -2.*s*Bu          # Rossby number
+Ro = -0.2              # Rossby number
 al = 20.               # Rato of frequencies
 
 '''
@@ -49,7 +48,7 @@ Nx, Ny, Nz = 128,128,128
 mins  = 60.0
 days  = 3600*24.0 
 t0    = 0
-tf    = 600*days
+tf    = 400*days
 tplot = 1.0*days
 nct   = np.ceil(tf/tplot)         
 

@@ -84,5 +84,10 @@ if rank == 0:
     plt.draw()
     fig.set_tight_layout(True)
 
-    np.savez('Diagnostics/perturbation_norms',ts=ts,norms=the_norms)
-    plt.savefig('Diagnostics/perturbation_norms.png')
+    # If the Diagnostics directory doesn't exist, make it
+    prefix = os.getcwd() + '/Diagnostics'
+    if not(os.path.exists(prefix)):
+        os.makedirs(prefix)
+
+    np.savez('{0:s}/perturbation_norms'.format(prefix),ts=ts,norms=the_norms)
+    plt.savefig('{0:s}/perturbation_norms.png'.format(prefix))
