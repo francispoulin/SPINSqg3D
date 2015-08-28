@@ -23,7 +23,8 @@ out_direct = os.getcwd() + '/Videos'  # Where to put the movies
 the_name = 'QG'                       # What to call the movies
 out_suffix = 'mp4'                    # Movie type
 mov_fps = 10                          # Framerate for movie
-plt_var = ['q','psi']                     # Which variables to plot
+#plt_var = ['q','psi']                     # Which variables to plot
+plt_var = ['psi']                     # Which variables to plot
 cmap = 'ocean'
 ##
 
@@ -77,29 +78,30 @@ else:
 
 # Initialize the meshes
 if not(dat.method == 'linear'):
+    print('not linear')
     fig_xy = plt.figure(figsize=(6,5))
     fig_xy_ttl = fig_xy.suptitle('')
     QM_xy = plt.pcolormesh(gridx,gridy,np.zeros((Ny,Nx)),cmap=cmap)
     plt.axis('tight')
-    cbar = plt.colorbar()
+    cbar = plt.colorbar(format='%.3e')
 
     fig_xz = plt.figure(figsize=(6,5))
     fig_xz_ttl = fig_xz.suptitle('')
     QM_xz = plt.pcolormesh(gridx,gridz,np.zeros((Nz,Nx)),cmap=cmap)
     plt.axis('tight')
-    cbar = plt.colorbar()
+    cbar = plt.colorbar(format='%.3e')
 
 fig_xy_p = plt.figure(figsize=(6,5))
 fig_xy_p_ttl = fig_xy_p.suptitle('')
 QM_xy_p = plt.pcolormesh(gridx,gridy,np.zeros((Ny,Nx)),cmap=cmap)
 plt.axis('tight')
-cbar = plt.colorbar()
+cbar = plt.colorbar(format='%.3e')
 
 fig_xz_p = plt.figure(figsize=(6,5))
 fig_xz_p_ttl = fig_xz_p.suptitle('')
 QM_xz_p = plt.pcolormesh(gridx,gridz,np.zeros((Nz,Nx)),cmap=cmap)
 plt.axis('tight')
-cbar = plt.colorbar()
+cbar = plt.colorbar(format='%.3e')
 
 for var in plt_var:
 
@@ -107,7 +109,7 @@ for var in plt_var:
     cont = True
 
     # Load background state
-    if dat.method == 'linear':
+    if not(dat.method == 'linear'):
         if var == 'q':
             bg_xy = spy.reader(dat.qb_file,0,[0,-1],[0,-1],dat.Nz/2,force_name=True)
             bg_xz = spy.reader(dat.qb_file,0,[0,-1],dat.Ny/2,[0,-1],force_name=True)
